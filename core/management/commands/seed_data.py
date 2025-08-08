@@ -1,8 +1,9 @@
 from django.core.management.base import BaseCommand
+from django.contrib.auth.models import User
 from datetime import date, timedelta
 from core.models import (
     AnimalType, Breed, FeedType, FeedingRecommendation, 
-    Disease, Symptom, MarketPrice
+    Disease, Symptom, MarketPrice, Livestock, FarmerProfile
 )
 
 
@@ -29,6 +30,9 @@ class Command(BaseCommand):
         
         # Create Sample Market Prices
         self.create_market_prices()
+        
+        # Create Sample Livestock for existing users
+        self.create_sample_livestock()
         
         self.stdout.write(self.style.SUCCESS('Data seeding completed successfully!'))
 
@@ -369,3 +373,134 @@ class Command(BaseCommand):
                     
                     if created:
                         self.stdout.write(f'Created market price: {animal_type.name} - {location} - ${price}/kg')
+
+    def create_sample_livestock(self):
+        # Check if there are any users in the system
+        users = User.objects.filter(is_superuser=False)
+        if not users.exists():
+            self.stdout.write(self.style.WARNING('No regular users found. Creating sample livestock for all users including superusers.'))
+            users = User.objects.all()
+        
+        if not users.exists():
+            self.stdout.write(self.style.WARNING('No users found in the system. Skipping livestock creation.'))
+            return
+        
+        # Get animal types and breeds
+        cattle = AnimalType.objects.get(name='Cattle')
+        goats = AnimalType.objects.get(name='Goats')
+        sheep = AnimalType.objects.get(name='Sheep')
+        poultry = AnimalType.objects.get(name='Poultry')
+        
+        holstein = Breed.objects.get(name='Holstein', animal_type=cattle)
+        angus = Breed.objects.get(name='Angus', animal_type=cattle)
+        boer = Breed.objects.get(name='Boer', animal_type=goats)
+        nubian = Breed.objects.get(name='Nubian', animal_type=goats)
+        dorper = Breed.objects.get(name='Dorper', animal_type=sheep)
+        rhode_island = Breed.objects.get(name='Rhode Island Red', animal_type=poultry)
+        
+        # Sample livestock data for each user
+        sample_livestock = [
+            # Cattle
+            {
+                'animal_type': cattle, 'breed': holstein, 'tag_number': 'C001', 
+                'name': 'Bessie', 'gender': 'F', 'purpose': 'MILK', 
+                'weight': 450, 'age_days': 720, 'purchase_price': 1200
+            },
+            {
+                'animal_type': cattle, 'breed': angus, 'tag_number': 'C002', 
+                'name': 'Thunder', 'gender': 'M', 'purpose': 'MEAT', 
+                'weight': 380, 'age_days': 540, 'purchase_price': 900
+            },
+            {
+                'animal_type': cattle, 'breed': holstein, 'tag_number': 'C003', 
+                'name': 'Daisy', 'gender': 'F', 'purpose': 'MILK', 
+                'weight': 420, 'age_days': 650, 'purchase_price': 1100
+            },
+            
+            # Goats
+            {
+                'animal_type': goats, 'breed': boer, 'tag_number': 'G001', 
+                'name': 'Billy', 'gender': 'M', 'purpose': 'MEAT', 
+                'weight': 45, 'age_days': 365, 'purchase_price': 150
+            },
+            {
+                'animal_type': goats, 'breed': nubian, 'tag_number': 'G002', 
+                'name': 'Nanny', 'gender': 'F', 'purpose': 'MILK', 
+                'weight': 55, 'age_days': 450, 'purchase_price': 200
+            },
+            {
+                'animal_type': goats, 'breed': boer, 'tag_number': 'G003', 
+                'name': 'Kid', 'gender': 'F', 'purpose': 'BREEDING', 
+                'weight': 35, 'age_days': 240, 'purchase_price': 180
+            },
+            
+            # Sheep
+            {
+                'animal_type': sheep, 'breed': dorper, 'tag_number': 'S001', 
+                'name': 'Woolly', 'gender': 'F', 'purpose': 'MEAT', 
+                'weight': 60, 'age_days': 300, 'purchase_price': 120
+            },
+            {
+                'animal_type': sheep, 'breed': dorper, 'tag_number': 'S002', 
+                'name': 'Ram', 'gender': 'M', 'purpose': 'BREEDING', 
+                'weight': 75, 'age_days': 600, 'purchase_price': 200
+            },
+            
+            # Poultry
+            {
+                'animal_type': poultry, 'breed': rhode_island, 'tag_number': 'P001', 
+                'name': 'Henrietta', 'gender': 'F', 'purpose': 'EGGS', 
+                'weight': 2.2, 'age_days': 120, 'purchase_price': 15
+            },
+            {
+                'animal_type': poultry, 'breed': rhode_island, 'tag_number': 'P002', 
+                'name': 'Rooster', 'gender': 'M', 'purpose': 'BREEDING', 
+                'weight': 3.0, 'age_days': 180, 'purchase_price': 25
+            },
+        ]
+        
+        for user in users:
+            # Create farmer profile if it doesn't exist
+            farmer_profile, profile_created = FarmerProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'location': 'Sample Farm Location',
+                    'farm_size_acres': 50.0,
+                    'experience_years': 5
+                }
+            )
+            
+            if profile_created:
+                self.stdout.write(f'Created farmer profile for: {user.username}')
+            
+            # Create livestock for each user (modify tag numbers to be unique per user)
+            for i, livestock_data in enumerate(sample_livestock):
+                # Make tag number unique per user
+                unique_tag = f"{user.id}_{livestock_data['tag_number']}"
+                
+                # Calculate birth date
+                birth_date = date.today() - timedelta(days=livestock_data['age_days'])
+                purchase_date = birth_date + timedelta(days=30)  # Assume purchased 30 days after birth
+                
+                livestock, created = Livestock.objects.get_or_create(
+                    farmer=user,
+                    tag_number=unique_tag,
+                    defaults={
+                        'animal_type': livestock_data['animal_type'],
+                        'breed': livestock_data['breed'],
+                        'name': livestock_data['name'],
+                        'gender': livestock_data['gender'],
+                        'date_of_birth': birth_date,
+                        'current_weight_kg': livestock_data['weight'],
+                        'purpose': livestock_data['purpose'],
+                        'status': 'HEALTHY',
+                        'purchase_date': purchase_date,
+                        'purchase_price': livestock_data['purchase_price'],
+                        'notes': f'Sample livestock created for testing - {livestock_data["name"]}'
+                    }
+                )
+                
+                if created:
+                    self.stdout.write(f'Created livestock for {user.username}: {livestock.name} ({livestock.tag_number})')
+                
+        self.stdout.write(self.style.SUCCESS(f'Sample livestock creation completed for {users.count()} users!'))

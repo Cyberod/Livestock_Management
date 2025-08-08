@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Livestock Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    
+    .trend-up { color: #28a745; }
+    .trend-down { color: #dc3545; }
+    .trend-stable { color: #6c757d; }
+    
+    .alert-card {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .module-card {
+        height: 200px;
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .quick-action-btn {
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: 500;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 250px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% if user.is_authenticated %}
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+                    <p class="text-muted">Here's what's happening with your livestock today</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary quick-action-btn" onclick="location.href='{% url 'core:feeding-guide' %}'">
+                        <i class="bi bi-cup-straw me-1"></i>Quick Feed
+                    </button>
+                    <button class="btn btn-outline-warning quick-action-btn" onclick="location.href='{% url 'core:disease-monitor' %}'">
+                        <i class="bi bi-shield-check me-1"></i>Health Check
+                    </button>
+                    <button class="btn btn-outline-success quick-action-btn" onclick="location.href='{% url 'core:pricing-guide' %}'">
+                        <i class="bi bi-currency-dollar me-1"></i>Price Check
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number">{{ livestock_data.total_count }}</div>
+                            <div>Total Animals</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-heart-pulse" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number">{{ health_data.health_percentage }}%</div>
+                            <div>Healthy Animals</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-shield-check" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number">${{ livestock_data.financial.estimated_value }}</div>
+                            <div>Estimated Value</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-currency-dollar" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-number">${{ livestock_data.financial.estimated_profit }}</div>
+                            <div>Est. Profit</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-graph-up" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Alerts & Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Critical Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if health_data.critical_alerts %}
+                        {% for alert in health_data.critical_alerts %}
+                        <div class="alert alert-warning alert-card mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ alert.animal.name|default:alert.animal.tag_number }}</strong>
+                                    <small class="text-muted">{{ alert.animal.animal_type.name }}</small>
+                                    <div>{{ alert.issue }}</div>
+                                </div>
+                                <span class="badge bg-{{ alert.priority|lower }}">{{ alert.priority }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">No critical alerts. All animals are healthy!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Health Records</h5>
+                </div>
+                <div class="card-body">
+                    {% if health_data.recent_records %}
+                        {% for record in health_data.recent_records %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                            <div>
+                                <strong>{{ record.livestock.name|default:record.livestock.tag_number }}</strong>
+                                <small class="text-muted d-block">{{ record.date_recorded|date:"M d, Y" }}</small>
+                            </div>
+                            <span class="badge bg-secondary">{{ record.recovery_status }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-clipboard-data text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">No recent health records</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Livestock Distribution & Market Trends -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Livestock Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="livestockChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Market Trends</h5>
+                </div>
+                <div class="card-body">
+                    {% if market_data.market_trends %}
+                        {% for trend in market_data.market_trends %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ trend.animal_type }}</strong>
+                                <small class="text-muted d-block">Last 7 days</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="trend-{{ trend.trend|lower }}">
+                                    {% if trend.trend == 'RISING' %}
+                                        <i class="bi bi-arrow-up"></i> +{{ trend.percentage }}%
+                                    {% elif trend.trend == 'FALLING' %}
+                                        <i class="bi bi-arrow-down"></i> {{ trend.percentage }}%
+                                    {% else %}
+                                        <i class="bi bi-arrow-right"></i> {{ trend.percentage }}%
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-graph-up text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">No recent market data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Access Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card module-card bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-cup-straw mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Feeding Guide</h5>
+                    <p class="card-text">Smart feeding recommendations based on animal type, age, and purpose</p>
+                    <a href="{% url 'core:feeding-guide' %}" class="btn btn-light btn-sm mt-auto">
+                        <i class="bi bi-arrow-right me-1"></i>Open Module
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card module-card bg-gradient" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-body text-white text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-shield-check mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Disease Monitor</h5>
+                    <p class="card-text">Early disease detection and health monitoring for your livestock</p>
+                    <a href="{% url 'core:disease-monitor' %}" class="btn btn-light btn-sm mt-auto">
+                        <i class="bi bi-arrow-right me-1"></i>Open Module
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card module-card bg-gradient" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="card-body text-white text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-currency-dollar mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="card-title">Pricing Guide</h5>
+                    <p class="card-text">Market analysis and optimal selling time recommendations</p>
+                    <a href="{% url 'core:pricing-guide' %}" class="btn btn-light btn-sm mt-auto">
+                        <i class="bi bi-arrow-right me-1"></i>Open Module
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Guest User View -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold text-success mb-3">
+                <i class="bi bi-heart-pulse me-3"></i>
+                Livestock Management System
+            </h1>
+            <p class="lead text-muted mb-4">
+                Supporting small-scale farmers with smart decision-making tools for better livestock sustainability
+            </p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a href="{% url 'register' %}" class="btn btn-success btn-lg me-md-2">
+                    <i class="bi bi-person-plus me-2"></i>Get Started
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-success btn-lg">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features for visitors -->
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="text-center">
+                <div class="mb-3">
+                    <i class="bi bi-cup-straw text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h5>Smart Feeding</h5>
+                <p class="text-muted">Get personalized feeding recommendations for cattle, goats, sheep, and poultry.</p>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="text-center">
+                <div class="mb-3">
+                    <i class="bi bi-shield-check text-warning" style="font-size: 3rem;"></i>
+                </div>
+                <h5>Health Monitoring</h5>
+                <p class="text-muted">Early disease detection and monitoring to keep your livestock healthy.</p>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="text-center">
+                <div class="mb-3">
+                    <i class="bi bi-currency-dollar text-success" style="font-size: 3rem;"></i>
+                </div>
+                <h5>Market Pricing</h5>
+                <p class="text-muted">Make informed decisions about when to sell with our pricing guide.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if user.is_authenticated and livestock_data.animal_counts %}
+// Livestock Distribution Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('livestockChart').getContext('2d');
+    
+    const livestockData = {{ livestock_data_json|safe }};
+    const animalData = livestockData.animal_counts;
+    const labels = animalData.map(item => item.animal_type__name);
+    const data = animalData.map(item => item.count);
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+{% endif %}
+</script>
+{% endblock %}
