@@ -37,17 +37,17 @@
                     </li>
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="feedingLink">
+                        <a class="nav-link" href="{% url 'core:feeding-guide' %}">
                             <i class="bi bi-cup-straw me-1"></i>Feeding
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="diseaseLink">
+                        <a class="nav-link" href="{% url 'core:disease-monitor' %}">
                             <i class="bi bi-shield-check me-1"></i>Disease Monitor
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="pricingLink">
+                        <a class="nav-link" href="{% url 'core:pricing-guide' %}">
                             <i class="bi bi-currency-dollar me-1"></i>Pricing
                         </a>
                     </li>

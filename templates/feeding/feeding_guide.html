@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+
+{% block title %}Feeding Guide - Livestock Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-cup-straw text-primary me-3" style="font-size: 2rem;"></i>
+                <div>
+                    <h2 class="mb-1">Feeding Guide</h2>
+                    <p class="text-muted mb-0">Get personalized feeding recommendations for your livestock</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Input Form -->
+        <div class="col-lg-5 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Animal Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="feedingForm">
+                        <!-- Source Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Get recommendations for:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="source" id="newAnimal" value="new" checked>
+                                <label class="form-check-label" for="newAnimal">
+                                    New animal (enter details manually)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="source" id="existingAnimal" value="existing">
+                                <label class="form-check-label" for="existingAnimal">
+                                    My existing livestock
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Existing Livestock Selection -->
+                        <div id="existingLivestockSection" class="mb-3" style="display: none;">
+                            <label for="livestockSelect" class="form-label">Select Livestock</label>
+                            <select class="form-select" id="livestockSelect">
+                                <option value="">Choose livestock...</option>
+                            </select>
+                        </div>
+
+                        <!-- Manual Input Section -->
+                        <div id="manualInputSection">
+                            <!-- Animal Type -->
+                            <div class="mb-3">
+                                <label for="animalType" class="form-label">Animal Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="animalType" required>
+                                    <option value="">Select animal type...</option>
+                                </select>
+                            </div>
+
+                            <!-- Age -->
+                            <div class="mb-3">
+                                <label for="ageMonths" class="form-label">Age (months)</label>
+                                <input type="number" class="form-control" id="ageMonths" min="0" max="120" 
+                                       placeholder="e.g., 12">
+                                <div class="form-text">Optional - helps improve recommendations</div>
+                            </div>
+
+                            <!-- Weight -->
+                            <div class="mb-3">
+                                <label for="weightKg" class="form-label">Weight (kg)</label>
+                                <input type="number" class="form-control" id="weightKg" min="0" step="0.1" 
+                                       placeholder="e.g., 250.5">
+                                <div class="form-text">Optional - helps improve recommendations</div>
+                            </div>
+
+                            <!-- Purpose -->
+                            <div class="mb-3">
+                                <label for="purpose" class="form-label">Primary Purpose</label>
+                                <select class="form-select" id="purpose">
+                                    <option value="">Select purpose...</option>
+                                    <option value="MEAT">Meat Production</option>
+                                    <option value="MILK">Milk Production</option>
+                                    <option value="EGGS">Egg Production</option>
+                                    <option value="BREEDING">Breeding</option>
+                                    <option value="MIXED">Mixed Purpose</option>
+                                </select>
+                                <div class="form-text">Optional - helps optimize nutrition</div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="getRecommendationsBtn">
+                                <i class="bi bi-search me-2"></i>Get Feeding Recommendations
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Feeding Recommendations</h5>
+                    <span id="recommendationCount" class="badge bg-light text-dark" style="display: none;">0</span>
+                </div>
+                <div class="card-body">
+                    <!-- Initial State -->
+                    <div id="initialState" class="text-center py-5">
+                        <i class="bi bi-cup-straw text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">No recommendations yet</h5>
+                        <p class="text-muted">Fill in the animal information and click "Get Feeding Recommendations" to see personalized feeding advice.</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loadingState" class="text-center py-5" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5 class="text-muted mt-3">Analyzing animal data...</h5>
+                        <p class="text-muted">Finding the best feeding recommendations for your animal.</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="errorState" class="alert alert-danger" style="display: none;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span id="errorMessage">An error occurred while getting recommendations.</span>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="resultsSection" style="display: none;">
+                        <!-- Animal Info Summary -->
+                        <div id="animalSummary" class="alert alert-info mb-3">
+                            <h6 class="mb-2"><i class="bi bi-info-circle me-2"></i>Animal Information</h6>
+                            <div id="animalSummaryContent"></div>
+                        </div>
+
+                        <!-- Cost Summary -->
+                        <div id="costSummary" class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Daily Cost</h6>
+                                        <h4 class="text-primary mb-0" id="dailyCost">$0.00</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Monthly Estimate</h6>
+                                        <h4 class="text-success mb-0" id="monthlyCost">$0.00</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations List -->
+                        <div id="recommendationsList">
+                            <!-- Recommendations will be inserted here -->
+                        </div>
+
+                        <!-- Additional Notes -->
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <h6><i class="bi bi-lightbulb me-2"></i>Important Notes</h6>
+                            <ul class="mb-0 small">
+                                <li>These are general recommendations. Consult with a veterinarian for specific health needs.</li>
+                                <li>Feed quality, local availability, and animal health conditions may affect requirements.</li>
+                                <li>Gradually introduce new feeds to avoid digestive issues.</li>
+                                <li>Always ensure fresh, clean water is available.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the feeding guide
+    initializeFeedingGuide();
+});
+
+function initializeFeedingGuide() {
+    // Load dropdown data
+    loadAnimalTypes();
+    loadUserLivestock();
+    
+    // Set up event handlers
+    setupEventHandlers();
+}
+
+function setupEventHandlers() {
+    // Source selection change
+    document.querySelectorAll('input[name="source"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            toggleSourceSections();
+        });
+    });
+    
+    // Livestock selection change
+    document.getElementById('livestockSelect').addEventListener('change', function() {
+        if (this.value) {
+            loadLivestockData(this.value);
+        }
+    });
+    
+    // Form submission
+    document.getElementById('feedingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        getFeedingRecommendations();
+    });
+}
+
+function toggleSourceSections() {
+    const isExisting = document.getElementById('existingAnimal').checked;
+    const existingSection = document.getElementById('existingLivestockSection');
+    const manualSection = document.getElementById('manualInputSection');
+    
+    if (isExisting) {
+        existingSection.style.display = 'block';
+        manualSection.style.display = 'none';
+    } else {
+        existingSection.style.display = 'none';
+        manualSection.style.display = 'block';
+    }
+}
+
+async function loadAnimalTypes() {
+    try {
+        const response = await fetch('/api/animal-types/');
+        const animalTypes = await response.json();
+        
+        const select = document.getElementById('animalType');
+        select.innerHTML = '<option value="">Select animal type...</option>';
+        
+        animalTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.id;
+            option.textContent = type.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading animal types:', error);
+    }
+}
+
+async function loadUserLivestock() {
+    try {
+        const response = await fetch('/api/user/livestock/');
+        const livestock = await response.json();
+        
+        const select = document.getElementById('livestockSelect');
+        select.innerHTML = '<option value="">Choose livestock...</option>';
+        
+        livestock.forEach(animal => {
+            const option = document.createElement('option');
+            option.value = animal.id;
+            option.textContent = `${animal.tag_number} - ${animal.name || animal.animal_type_name} (${animal.current_weight_kg || '?'}kg)`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading livestock:', error);
+    }
+}
+
+async function loadLivestockData(livestockId) {
+    // This would load detailed livestock data to pre-fill the form
+    // For now, we'll handle this in the API call
+}
+
+async function getFeedingRecommendations() {
+    showLoadingState();
+    
+    try {
+        const formData = gatherFormData();
+        
+        const response = await fetch('/api/feeding/recommendations/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        displayRecommendations(data);
+        
+    } catch (error) {
+        console.error('Error getting recommendations:', error);
+        showErrorState('Failed to get feeding recommendations. Please try again.');
+    }
+}
+
+function gatherFormData() {
+    const isExisting = document.getElementById('existingAnimal').checked;
+    
+    if (isExisting) {
+        const livestockId = document.getElementById('livestockSelect').value;
+        if (!livestockId) {
+            throw new Error('Please select a livestock animal');
+        }
+        
+        return {
+            livestock_id: parseInt(livestockId),
+            animal_type_id: 1 // Will be overridden by livestock data
+        };
+    } else {
+        const animalTypeId = document.getElementById('animalType').value;
+        if (!animalTypeId) {
+            throw new Error('Please select an animal type');
+        }
+        
+        const formData = {
+            animal_type_id: parseInt(animalTypeId)
+        };
+        
+        const ageMonths = document.getElementById('ageMonths').value;
+        if (ageMonths) {
+            formData.age_months = parseInt(ageMonths);
+        }
+        
+        const weightKg = document.getElementById('weightKg').value;
+        if (weightKg) {
+            formData.weight_kg = parseFloat(weightKg);
+        }
+        
+        const purpose = document.getElementById('purpose').value;
+        if (purpose) {
+            formData.purpose = purpose;
+        }
+        
+        return formData;
+    }
+}
+
+function displayRecommendations(data) {
+    // Update animal summary
+    updateAnimalSummary(data.animal_info);
+    
+    // Update cost summary
+    updateCostSummary(data.total_daily_cost);
+    
+    // Update recommendations list
+    updateRecommendationsList(data.recommendations);
+    
+    // Update count badge
+    document.getElementById('recommendationCount').textContent = data.total_recommendations;
+    document.getElementById('recommendationCount').style.display = 'inline';
+    
+    // Show results
+    showResultsState();
+}
+
+function updateAnimalSummary(animalInfo) {
+    const summaryContent = document.getElementById('animalSummaryContent');
+    
+    let html = `<strong>Animal Type:</strong> ${animalInfo.animal_type}`;
+    
+    if (animalInfo.age_months) {
+        html += ` | <strong>Age:</strong> ${animalInfo.age_months} months`;
+    }
+    
+    if (animalInfo.weight_kg) {
+        html += ` | <strong>Weight:</strong> ${animalInfo.weight_kg}kg`;
+    }
+    
+    if (animalInfo.purpose) {
+        html += ` | <strong>Purpose:</strong> ${animalInfo.purpose}`;
+    }
+    
+    summaryContent.innerHTML = html;
+}
+
+function updateCostSummary(dailyCost) {
+    const monthlyCost = dailyCost * 30;
+    
+    document.getElementById('dailyCost').textContent = `$${dailyCost.toFixed(2)}`;
+    document.getElementById('monthlyCost').textContent = `$${monthlyCost.toFixed(2)}`;
+}
+
+function updateRecommendationsList(recommendations) {
+    const container = document.getElementById('recommendationsList');
+    container.innerHTML = '';
+    
+    recommendations.forEach((rec, index) => {
+        const card = createRecommendationCard(rec, index + 1);
+        container.appendChild(card);
+    });
+}
+
+function createRecommendationCard(recommendation, index) {
+    const card = document.createElement('div');
+    card.className = 'card mb-3';
+    
+    const costBadge = recommendation.cost_per_day > 0 ? 
+        `<span class="badge bg-secondary">$${recommendation.cost_per_day.toFixed(2)}/day</span>` : '';
+    
+    card.innerHTML = `
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <span class="badge bg-primary me-2">${index}</span>
+                ${recommendation.feed_type.name}
+                <small class="text-muted">(${recommendation.feed_type.category})</small>
+            </h6>
+            ${costBadge}
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Feeding Instructions</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Amount:</strong> ${recommendation.daily_amount_kg}kg per day</li>
+                        <li><strong>Frequency:</strong> ${recommendation.feeding_frequency} times per day</li>
+                        <li><strong>Per feeding:</strong> ${(recommendation.daily_amount_kg / recommendation.feeding_frequency).toFixed(2)}kg</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Feed Details</h6>
+                    <ul class="list-unstyled">
+                        ${recommendation.feed_type.protein_percentage ? 
+                            `<li><strong>Protein:</strong> ${recommendation.feed_type.protein_percentage}%</li>` : ''}
+                        ${recommendation.feed_type.energy_mj_per_kg ? 
+                            `<li><strong>Energy:</strong> ${recommendation.feed_type.energy_mj_per_kg} MJ/kg</li>` : ''}
+                        ${recommendation.feed_type.cost_per_kg ? 
+                            `<li><strong>Cost:</strong> $${recommendation.feed_type.cost_per_kg}/kg</li>` : ''}
+                    </ul>
+                </div>
+            </div>
+            ${recommendation.notes ? `
+                <div class="alert alert-info mb-0 mt-2">
+                    <small><strong>Notes:</strong> ${recommendation.notes}</small>
+                </div>
+            ` : ''}
+            <div class="text-end mt-2">
+                <small class="text-muted">Source: ${recommendation.recommendation_source}</small>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function showLoadingState() {
+    document.getElementById('initialState').style.display = 'none';
+    document.getElementById('errorState').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'block';
+}
+
+function showErrorState(message) {
+    document.getElementById('initialState').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorState').style.display = 'block';
+}
+
+function showResultsState() {
+    document.getElementById('initialState').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'block';
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+</script>
+{% endblock %}

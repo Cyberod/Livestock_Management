@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Disease Monitor - Livestock Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-shield-check text-warning" style="font-size: 4rem;"></i>
+                    <h2 class="mt-3 mb-3">Disease Monitor</h2>
+                    <p class="lead text-muted mb-4">
+                        Monitor symptoms and get early warnings about potential health issues in your livestock.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle me-2"></i>Coming Soon in Sprint 4</h5>
+                        <p class="mb-0">
+                            This module is currently under development and will be available in Sprint 4. 
+                            It will include symptom checking, disease identification, and health tracking features.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>Planned Features:</h6>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Symptom input and analysis</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Disease identification</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Treatment recommendations</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Health record tracking</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Veterinary alerts</li>
+                        </ul>
+                    </div>
+                    
+                    <a href="{% url 'home' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Pricing Guide - Livestock Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-currency-dollar text-success" style="font-size: 4rem;"></i>
+                    <h2 class="mt-3 mb-3">Pricing Guide</h2>
+                    <p class="lead text-muted mb-4">
+                        Get market pricing estimates and decide when it's the best time to sell your livestock.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle me-2"></i>Coming Soon in Sprint 5</h5>
+                        <p class="mb-0">
+                            This module is currently under development and will be available in Sprint 5. 
+                            It will include market price analysis, selling recommendations, and profit calculations.
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>Planned Features:</h6>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Current market prices</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Price trend analysis</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Sell vs keep recommendations</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Profit calculations</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Market location comparison</li>
+                        </ul>
+                    </div>
+                    
+                    <a href="{% url 'home' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

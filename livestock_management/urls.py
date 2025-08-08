@@ -44,6 +44,9 @@ urlpatterns = [
     path('', include('django.contrib.auth.urls')),
     path('', include('accounts.urls')),
     
+    # Core module APIs
+    path('', include('core.urls')),
+    
     # API Endpoints
     path('api/health/', api_views.api_health, name='api-health'),
     path('api/system-info/', api_views.system_info, name='api-system-info'),
