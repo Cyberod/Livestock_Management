@@ -275,3 +275,94 @@ class MarketPrice(models.Model):
         verbose_name = "Market Price"
         verbose_name_plural = "Market Prices"
         ordering = ['-date_recorded']
+
+
+class PriceAlert(models.Model):
+    """
+    Price alerts for livestock when target prices are reached
+    """
+    farmer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='price_alerts')
+    animal_type = models.ForeignKey(AnimalType, on_delete=models.CASCADE)
+    breed = models.ForeignKey(Breed, on_delete=models.CASCADE, blank=True, null=True)
+    location = models.CharField(max_length=100)
+    target_price = models.DecimalField(max_digits=8, decimal_places=2)
+    alert_type = models.CharField(max_length=10, choices=[
+        ('ABOVE', 'Price Above Target'),
+        ('BELOW', 'Price Below Target'),
+    ])
+    is_active = models.BooleanField(default=True)
+    triggered_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.farmer.username} - {self.animal_type.name} {self.alert_type} ${self.target_price}/kg"
+    
+    class Meta:
+        verbose_name = "Price Alert"
+        verbose_name_plural = "Price Alerts"
+
+
+class SaleRecord(models.Model):
+    """
+    Records of livestock sales
+    """
+    farmer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales')
+    livestock = models.ForeignKey(Livestock, on_delete=models.CASCADE, related_name='sales')
+    sale_date = models.DateField()
+    sale_price_per_kg = models.DecimalField(max_digits=8, decimal_places=2)
+    total_weight_kg = models.DecimalField(max_digits=6, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    buyer_name = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=100)
+    transportation_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    commission_cost = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    net_profit = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        if self.total_amount and self.transportation_cost and self.commission_cost:
+            self.net_profit = self.total_amount - self.transportation_cost - self.commission_cost
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.livestock} sold on {self.sale_date} for ${self.total_amount}"
+    
+    class Meta:
+        verbose_name = "Sale Record"
+        verbose_name_plural = "Sale Records"
+        ordering = ['-sale_date']
+
+
+class CostRecord(models.Model):
+    """
+    Track costs associated with livestock management
+    """
+    COST_CATEGORY_CHOICES = [
+        ('FEED', 'Feed'),
+        ('VETERINARY', 'Veterinary'),
+        ('MEDICINE', 'Medicine'),
+        ('TRANSPORT', 'Transportation'),
+        ('EQUIPMENT', 'Equipment'),
+        ('LABOR', 'Labor'),
+        ('HOUSING', 'Housing/Shelter'),
+        ('OTHER', 'Other'),
+    ]
+    
+    farmer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='costs')
+    livestock = models.ForeignKey(Livestock, on_delete=models.CASCADE, related_name='costs', blank=True, null=True)
+    category = models.CharField(max_length=20, choices=COST_CATEGORY_CHOICES)
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date_incurred = models.DateField()
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        livestock_info = f" - {self.livestock}" if self.livestock else ""
+        return f"{self.category}: ${self.amount}{livestock_info} ({self.date_incurred})"
+    
+    class Meta:
+        verbose_name = "Cost Record"
+        verbose_name_plural = "Cost Records"
+        ordering = ['-date_incurred']
