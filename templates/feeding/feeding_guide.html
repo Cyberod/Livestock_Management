@@ -25,8 +25,9 @@
                     <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Animal Information</h5>
                 </div>
                 <div class="card-body">
-                    <form id="feedingForm">
-                        <!-- Source Selection -->
+                    <form id="feedingForm" novalidate>
+                    {% csrf_token %}
+                         <!-- Source Selection -->
                         <div class="mb-3">
                             <label class="form-label">Get recommendations for:</label>
                             <div class="form-check">
@@ -45,50 +46,50 @@
 
                         <!-- Existing Livestock Selection -->
                         <div id="existingLivestockSection" class="mb-3" style="display: none;">
-                            <label for="livestockSelect" class="form-label">Select Livestock</label>
-                            <select class="form-select" id="livestockSelect">
-                                <option value="">Choose livestock...</option>
-                            </select>
+                        <label for="livestockSelect" class="form-label">Select Livestock</label>
+                        <select class="form-select" id="livestockSelect" name="livestock_id">
+                        <option value="">Choose livestock...</option>
+                        </select>
                         </div>
 
                         <!-- Manual Input Section -->
                         <div id="manualInputSection">
                             <!-- Animal Type -->
                             <div class="mb-3">
-                                <label for="animalType" class="form-label">Animal Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="animalType" required>
-                                    <option value="">Select animal type...</option>
-                                </select>
+                            <label for="animalType" class="form-label">Animal Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="animalType" name="animal_type_id" required>
+                            <option value="">Select animal type...</option>
+                            </select>
                             </div>
 
                             <!-- Age -->
                             <div class="mb-3">
-                                <label for="ageMonths" class="form-label">Age (months)</label>
-                                <input type="number" class="form-control" id="ageMonths" min="0" max="120" 
-                                       placeholder="e.g., 12">
-                                <div class="form-text">Optional - helps improve recommendations</div>
+                            <label for="ageMonths" class="form-label">Age (months)</label>
+                            <input type="number" class="form-control" id="ageMonths" name="age_months" min="0" max="120"
+                            placeholder="e.g., 12">
+                            <div class="form-text">Optional - helps improve recommendations</div>
                             </div>
 
                             <!-- Weight -->
                             <div class="mb-3">
-                                <label for="weightKg" class="form-label">Weight (kg)</label>
-                                <input type="number" class="form-control" id="weightKg" min="0" step="0.1" 
-                                       placeholder="e.g., 250.5">
-                                <div class="form-text">Optional - helps improve recommendations</div>
+                            <label for="weightKg" class="form-label">Weight (kg)</label>
+                            <input type="number" class="form-control" id="weightKg" name="weight_kg" min="0" step="0.1"
+                            placeholder="e.g., 250.5">
+                            <div class="form-text">Optional - helps improve recommendations</div>
                             </div>
 
                             <!-- Purpose -->
                             <div class="mb-3">
-                                <label for="purpose" class="form-label">Primary Purpose</label>
-                                <select class="form-select" id="purpose">
-                                    <option value="">Select purpose...</option>
-                                    <option value="MEAT">Meat Production</option>
-                                    <option value="MILK">Milk Production</option>
-                                    <option value="EGGS">Egg Production</option>
-                                    <option value="BREEDING">Breeding</option>
-                                    <option value="MIXED">Mixed Purpose</option>
-                                </select>
-                                <div class="form-text">Optional - helps optimize nutrition</div>
+                            <label for="purpose" class="form-label">Primary Purpose</label>
+                            <select class="form-select" id="purpose" name="purpose">
+                            <option value="">Select purpose...</option>
+                            <option value="MEAT">Meat Production</option>
+                            <option value="MILK">Milk Production</option>
+                            <option value="EGGS">Egg Production</option>
+                            <option value="BREEDING">Breeding</option>
+                            <option value="MIXED">Mixed Purpose</option>
+                            </select>
+                            <div class="form-text">Optional - helps optimize nutrition</div>
                             </div>
                         </div>
 

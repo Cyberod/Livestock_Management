@@ -1,8 +1,18 @@
-from typing import List, Dict, Optional
+
+from django.db import models
+from typing import List, Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import Disease, Symptom
+
 from dataclasses import dataclass
 from .models import (
     AnimalType, FeedType, FeedingRecommendation, Livestock
 )
+
+
+
+
 
 
 @dataclass
@@ -305,8 +315,7 @@ class FeedingRecommendationService:
         }
 
 
-# Import models.Q after Django is set up
-from django.db import models
+
 
 
 @dataclass
@@ -381,12 +390,15 @@ class DiseaseMonitoringService:
         # Find matching symptoms
         matching_symptoms = list(set(input_symptoms) & set(disease_symptoms))
         
-        # Find missing symptoms for this disease
-        missing_symptoms = list(set(disease_symptoms) - set(input_symptoms))
+        # Find missing symptoms
+        missing_symptoms = list(set(disease_symptoms) - set(matching_symptoms))
         
-        # Calculate confidence score based on various factors
+        # Calculate confidence score
         confidence_score = self._calculate_confidence_score(
-            disease, matching_symptoms, missing_symptoms, input_symptoms
+            disease, 
+            matching_symptoms, 
+            missing_symptoms, 
+            input_symptoms
         )
         
         return DiseaseResult(

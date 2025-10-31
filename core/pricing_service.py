@@ -1,6 +1,8 @@
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 from datetime import date, timedelta
+from .models import AnimalType, MarketPrice
+
 
 
 @dataclass
@@ -54,7 +56,6 @@ class PricingAnalysisService:
         Returns:
             PriceAnalysisResult object with market analysis
         """
-        from .models import AnimalType, MarketPrice, Breed
         
         try:
             animal_type = AnimalType.objects.get(id=price_input.animal_type_id)
