@@ -2,8 +2,8 @@ services:
   - type: web
     name: livestock-management
     runtime: python3
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn livestock_management.wsgi:application --bind 0.0.0.0:$PORT"
+    buildCommand: sh build.sh
+    startCommand: gunicorn livestock_management.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: DATABASE_URL
         fromDatabase:
