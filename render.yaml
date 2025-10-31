@@ -13,6 +13,6 @@ services:
         generateValue: true
       - key: DEBUG
         value: False
-  - type: postgres
-    name: livestock-management-db
+databases:
+  - name: livestock-management-db
     ipAllowList: []
